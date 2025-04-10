@@ -1,8 +1,8 @@
-.PHONY: build run stop
+.PHONY: build run stop logs
 
 # Docker image and container names
-IMAGE_NAME = qr-code-api
-CONTAINER_NAME = qr-code-api-container
+IMAGE_NAME = qr-code-frontend-dev
+CONTAINER_NAME = qr-code-frontend-dev
 
 # Build the Docker image
 build:
@@ -11,9 +11,11 @@ build:
 # Run the container
 run:
 	docker run -d --name $(CONTAINER_NAME) \
-		--env-file .aws \
-		-p 8000:8000 \
-		$(IMAGE_NAME)
+        -p 3000:3000 \
+        -v $(PWD):/app \
+        -v /app/node_modules \
+        -e NEXT_PUBLIC_API_URL=http://localhost:8000 \
+        $(IMAGE_NAME)
 
 # Stop and remove the container
 stop:
