@@ -1,0 +1,17 @@
+name: push docker images in ecr
+on: [push]
+jobs:
+  push_images:
+    name: push images
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout source code
+        uses: actions/checkout@v3
+      - name: push images
+        run: |
+          cd source/api && make build && make push 
+          cd ../frontend && make build && make push
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-north-1

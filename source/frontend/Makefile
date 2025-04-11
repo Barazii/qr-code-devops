@@ -1,8 +1,12 @@
-.PHONY: build run stop logs
+AWS_REGION = eu-north-1
+AWS_ACCOUNT_ID = 482497089777
+ECR_URL = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+
+.PHONY: build run stop logs push
 
 # Docker image and container names
-IMAGE_NAME = qr-code-frontend-dev
-CONTAINER_NAME = qr-code-frontend-dev
+IMAGE_NAME = qr-code-frontend
+CONTAINER_NAME = qr-code-frontend-container
 
 # Build the Docker image
 build:
@@ -25,3 +29,9 @@ stop:
 # Show container logs
 logs:
 	docker logs -f $(CONTAINER_NAME)
+
+# Push the image to AWS ECR
+push:
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
+	docker tag $(IMAGE_NAME):latest $(ECR_URL)/$(IMAGE_NAME):latest
+	docker push $(ECR_URL)/$(IMAGE_NAME):latest
