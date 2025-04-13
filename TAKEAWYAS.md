@@ -1,1 +1,2 @@
 1. Terraform for creation and managing resources on multiple clouds (not necessarily related to docker containers, could be, for example, only creating VPC). Kubernetes for creation and managing containers. For this particular project, terraform could've been skipped (since only one cloud used).  
+2. Cloudformation is better than terraform for resources allocations (on AWS cloud) in terms of permissions and resources deletion at the end. 
