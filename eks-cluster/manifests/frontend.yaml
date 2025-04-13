@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: qr-code-app
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 482497089777.dkr.ecr.eu-north-1.amazonaws.com/qr-code-frontend:latest
+          ports:
+            - containerPort: 3000 # Adjust to your front-end's port
+          env:
+            - name: API_URL
+              value: "http://api-service.qr-code-app.svc.cluster.local" # API Service DNS name
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: qr-code-app
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 3000 # Match this to the containerPort in frontend-deployment.yaml
+  type: LoadBalancer
