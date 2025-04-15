@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template to create an EKS cluster, deploy Python API and Next.js frontend from ECR, and set up Kubernetes resources.
+
+Parameters:
+  ClusterName:
+    Type: String
+    Default: my-eks-cluster
+    Description: Name of the EKS cluster
+  NodeGroupName:
+    Type: String
+    Default: my-node-group
+    Description: Name of the EKS node group
+  NodeInstanceType:
+    Type: String
+    Default: t3.medium
+    Description: Instance type for EKS worker nodes
+  DesiredCapacity:
+    Type: Number
+    Default: 2
+    Description: Desired number of worker nodes
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: ID of the existing VPC
+    Default: vpc-0e344639103d9d4bd
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: List of subnet IDs for the EKS cluster
+    Default: subnet-07689c63b26c09b50,subnet-03abf3db67d5c6eac,subnet-0d4952ea32c4833ba
+
+Resources:
+  # IAM Role for EKS Cluster
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSVPCResourceController
+
+  # EKS Cluster
+  EKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      RoleArn: !GetAtt EKSClusterRole.Arn
+      Version: "1.30"
+      ResourcesVpcConfig:
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds: []
+
+  # IAM Role for EKS Node Group
+  EKSNodeGroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+  # EKS Node Group
+  EKSNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodegroupName: !Ref NodeGroupName
+      NodeRole: !GetAtt EKSNodeGroupRole.Arn
+      Subnets: !Ref SubnetIds
+      InstanceTypes:
+        - !Ref NodeInstanceType
+      ScalingConfig:
+        DesiredSize: !Ref DesiredCapacity
+        MinSize: 1
+        MaxSize: 3
+
+Outputs:
+  ClusterName:
+    Description: Name of the EKS cluster
+    Value: !Ref EKSCluster
+  ClusterEndpoint:
+    Description: Endpoint for the EKS cluster
+    Value: !GetAtt EKSCluster.Endpoint
+  NodeGroupName:
+    Description: Name of the node group
+    Value: !Ref EKSNodeGroup
